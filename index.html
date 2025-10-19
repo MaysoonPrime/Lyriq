@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Singing Practice App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .stop-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .stop-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pitch-display {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .pitch-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .note-value {
+            font-size: 2em;
+            color: #764ba2;
+            margin-bottom: 20px;
+        }
+
+        .pitch-indicator {
+            width: 100%;
+            height: 60px;
+            background: #e0e0e0;
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .pitch-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #f5576c 0%, #ffd700 50%, #4ade80 100%);
+            width: 0%;
+            transition: width 0.1s, background 0.3s;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 15px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .feedback {
+            font-size: 1.5em;
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .feedback.perfect {
+            background: #4ade80;
+            color: white;
+        }
+
+        .feedback.close {
+            background: #ffd700;
+            color: #333;
+        }
+
+        .feedback.off {
+            background: #f5576c;
+            color: white;
+        }
+
+        .melody-input {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .melody-input h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .note-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .note-btn {
+            padding: 15px;
+            background: #f5f7fa;
+            border: 2px solid #c3cfe2;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .note-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .melody-sequence {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            min-height: 50px;
+            padding: 15px;
+            background: #f5f7fa;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .melody-note {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .melody-note:hover {
+            background: #f5576c;
+        }
+
+        .melody-note.active {
+            background: #4ade80;
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(74, 222, 128, 0.5);
+        }
+
+        .clear-btn {
+            background: #f5576c;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.9em;
+        }
+
+        .recording-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .recording-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .recordings-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .recording-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f5f7fa;
+            border-radius: 8px;
+            border: 2px solid #c3cfe2;
+        }
+
+        .recording-info {
+            flex: 1;
+        }
+
+        .recording-title {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .recording-time {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .play-btn, .delete-btn, .download-btn {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            border-radius: 6px;
+        }
+
+        .play-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .play-btn.playing {
+            background: #f5576c;
+        }
+
+        .delete-btn {
+            background: #f5576c;
+            color: white;
+        }
+
+        .download-btn {
+            background: #4ade80;
+            color: white;
+        }
+
+        .recording-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #f5576c;
+            border-radius: 50%;
+            margin-left: 10px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .info {
+            background: #e7f3ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .info h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .status.listening {
+            background: #4ade80;
+            color: white;
+        }
+
+        .status.stopped {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .status.recording {
+            background: #f5576c;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Singing Practice App</h1>
+        <p class="subtitle">Real-time pitch detection and feedback</p>
+
+        <div class="status stopped" id="status">Ready to start</div>
+
+        <div class="controls">
+            <button class="start-btn" id="startBtn">🎤 Start Listening</button>
+            <button class="stop-btn" id="stopBtn" disabled>⏹️ Stop</button>
+        </div>
+
+        <div class="pitch-display">
+            <div class="pitch-value" id="pitchValue">--</div>
+            <div class="note-value" id="noteValue">--</div>
+            <div class="pitch-indicator">
+                <div class="pitch-bar" id="pitchBar"></div>
+            </div>
+            <div class="feedback" id="feedback" style="display: none;"></div>
+        </div>
+
+        <div class="recording-section">
+            <h3>🎙️ Recording</h3>
+            <p style="margin-bottom: 15px; color: #666;">Your singing will be automatically recorded while practicing</p>
+            <div class="recordings-list" id="recordingsList">
+                <p style="color: #999; text-align: center; padding: 20px;">No recordings yet. Start practicing to create your first recording!</p>
+            </div>
+        </div>
+
+        <div class="melody-input">
+            <h3>Create Your Melody</h3>
+            <p style="margin-bottom: 15px; color: #666;">Click notes to build your melody sequence:</p>
+            <div class="note-buttons" id="noteButtons"></div>
+            <div class="melody-sequence" id="melodySequence">
+                <span style="color: #999;">Your melody will appear here...</span>
+            </div>
+            <button class="clear-btn" id="clearBtn">Clear Melody</button>
+        </div>
+
+        <div class="info">
+            <h4>How to Use:</h4>
+            <ol style="padding-left: 20px; line-height: 1.8;">
+                <li>Create a melody by clicking notes above</li>
+                <li>Click "Start Listening" to begin</li>
+                <li>Sing the notes in sequence</li>
+                <li>Watch for real-time pitch feedback (Green = Perfect, Yellow = Close, Red = Off)</li>
+                <li>The app will automatically advance to the next note when you hit the current one</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Note frequencies (A4 = 440Hz standard)
+        const noteFrequencies = {
+            'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13,
+            'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'G4': 392.00,
+            'G#4': 415.30, 'A4': 440.00, 'A#4': 466.16, 'B4': 493.88,
+            'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25,
+            'E5': 659.25, 'F5': 698.46, 'F#5': 739.99, 'G5': 783.99,
+            'G#5': 830.61, 'A5': 880.00, 'A#5': 932.33, 'B5': 987.77
+        };
+
+        let audioContext;
+        let analyser;
+        let microphone;
+        let scriptProcessor;
+        let isListening = false;
+        let melody = [];
+        let currentNoteIndex = 0;
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordings = [];
+        let currentlyPlaying = null;
+
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const pitchValue = document.getElementById('pitchValue');
+        const noteValue = document.getElementById('noteValue');
+        const pitchBar = document.getElementById('pitchBar');
+        const feedback = document.getElementById('feedback');
+        const status = document.getElementById('status');
+        const noteButtons = document.getElementById('noteButtons');
+        const melodySequence = document.getElementById('melodySequence');
+        const clearBtn = document.getElementById('clearBtn');
+        const recordingsList = document.getElementById('recordingsList');
+
+        // Create note buttons
+        Object.keys(noteFrequencies).forEach(note => {
+            const btn = document.createElement('button');
+            btn.className = 'note-btn';
+            btn.textContent = note;
+            btn.onclick = () => addNoteToMelody(note);
+            noteButtons.appendChild(btn);
+        });
+
+        function addNoteToMelody(note) {
+            melody.push(note);
+            updateMelodyDisplay();
+        }
+
+        function updateMelodyDisplay() {
+            if (melody.length === 0) {
+                melodySequence.innerHTML = '<span style="color: #999;">Your melody will appear here...</span>';
+                return;
+            }
+
+            melodySequence.innerHTML = '';
+            melody.forEach((note, index) => {
+                const noteEl = document.createElement('div');
+                noteEl.className = 'melody-note';
+                if (index === currentNoteIndex && isListening) {
+                    noteEl.classList.add('active');
+                }
+                noteEl.textContent = note;
+                noteEl.onclick = () => removeNoteFromMelody(index);
+                melodySequence.appendChild(noteEl);
+            });
+        }
+
+        function removeNoteFromMelody(index) {
+            if (!isListening) {
+                melody.splice(index, 1);
+                updateMelodyDisplay();
+            }
+        }
+
+        clearBtn.onclick = () => {
+            if (!isListening) {
+                melody = [];
+                currentNoteIndex = 0;
+                updateMelodyDisplay();
+            }
+        };
+
+        startBtn.onclick = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                microphone = audioContext.createMediaStreamSource(stream);
+                scriptProcessor = audioContext.createScriptProcessor(4096, 1, 1);
+
+                analyser.fftSize = 4096;
+                microphone.connect(analyser);
+                analyser.connect(scriptProcessor);
+                scriptProcessor.connect(audioContext.destination);
+
+                scriptProcessor.onaudioprocess = processAudio;
+
+                // Start recording
+                audioChunks = [];
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const timestamp = new Date().toLocaleString();
+                    recordings.push({
+                        id: Date.now(),
+                        url: audioUrl,
+                        blob: audioBlob,
+                        timestamp: timestamp,
+                        duration: 0
+                    });
+                    updateRecordingsList();
+                };
+                mediaRecorder.start();
+
+                isListening = true;
+                currentNoteIndex = 0;
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                status.innerHTML = 'Listening... <span class="recording-indicator"></span>';
+                status.className = 'status recording';
+                updateMelodyDisplay();
+            } catch (err) {
+                alert('Microphone access denied. Please allow microphone access to use this app.');
+                console.error(err);
+            }
+        };
+
+        stopBtn.onclick = () => {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            
+            if (scriptProcessor) scriptProcessor.disconnect();
+            if (analyser) analyser.disconnect();
+            if (microphone) {
+                microphone.disconnect();
+                microphone.mediaStream.getTracks().forEach(track => track.stop());
+            }
+            if (audioContext) audioContext.close();
+
+            isListening = false;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            status.textContent = 'Stopped';
+            status.className = 'status stopped';
+            pitchValue.textContent = '--';
+            noteValue.textContent = '--';
+            pitchBar.style.width = '0%';
+            feedback.style.display = 'none';
+            updateMelodyDisplay();
+        };
+
+        function updateRecordingsList() {
+            if (recordings.length === 0) {
+                recordingsList.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No recordings yet. Start practicing to create your first recording!</p>';
+                return;
+            }
+
+            recordingsList.innerHTML = '';
+            recordings.forEach((recording, index) => {
+                const item = document.createElement('div');
+                item.className = 'recording-item';
+                item.innerHTML = `
+                    <div class="recording-info">
+                        <div class="recording-title">Recording ${recordings.length - index}</div>
+                        <div class="recording-time">${recording.timestamp}</div>
+                    </div>
+                    <button class="play-btn" onclick="playRecording(${recording.id})">▶️ Play</button>
+                    <button class="download-btn" onclick="downloadRecording(${recording.id})">💾 Download</button>
+                    <button class="delete-btn" onclick="deleteRecording(${recording.id})">🗑️ Delete</button>
+                `;
+                recordingsList.appendChild(item);
+            });
+        }
+
+        window.playRecording = (id) => {
+            const recording = recordings.find(r => r.id === id);
+            if (!recording) return;
+
+            // Stop currently playing audio if any
+            if (currentlyPlaying) {
+                currentlyPlaying.pause();
+                currentlyPlaying = null;
+                document.querySelectorAll('.play-btn').forEach(btn => {
+                    btn.textContent = '▶️ Play';
+                    btn.classList.remove('playing');
+                });
+            }
+
+            const audio = new Audio(recording.url);
+            const playBtn = event.target;
+            
+            audio.onplay = () => {
+                playBtn.textContent = '⏸️ Pause';
+                playBtn.classList.add('playing');
+                currentlyPlaying = audio;
+            };
+
+            audio.onpause = () => {
+                playBtn.textContent = '▶️ Play';
+                playBtn.classList.remove('playing');
+                currentlyPlaying = null;
+            };
+
+            audio.onended = () => {
+                playBtn.textContent = '▶️ Play';
+                playBtn.classList.remove('playing');
+                currentlyPlaying = null;
+            };
+
+            if (audio.paused) {
+                audio.play();
+            } else {
+                audio.pause();
+            }
+        };
+
+        window.downloadRecording = (id) => {
+            const recording = recordings.find(r => r.id === id);
+            if (!recording) return;
+
+            const a = document.createElement('a');
+            a.href = recording.url;
+            a.download = `singing-practice-${recording.id}.webm`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        };
+
+        window.deleteRecording = (id) => {
+            if (confirm('Delete this recording?')) {
+                const index = recordings.findIndex(r => r.id === id);
+                if (index !== -1) {
+                    URL.revokeObjectURL(recordings[index].url);
+                    recordings.splice(index, 1);
+                    updateRecordingsList();
+                }
+            }
+        };
+
+        function autoCorrelate(buffer, sampleRate) {
+            const SIZE = buffer.length;
+            const MAX_SAMPLES = Math.floor(SIZE / 2);
+            let best_offset = -1;
+            let best_correlation = 0;
+            let rms = 0;
+            let foundGoodCorrelation = false;
+
+            for (let i = 0; i < SIZE; i++) {
+                const val = buffer[i];
+                rms += val * val;
+            }
+            rms = Math.sqrt(rms / SIZE);
+
+            if (rms < 0.01) return -1;
+
+            let lastCorrelation = 1;
+            for (let offset = 1; offset < MAX_SAMPLES; offset++) {
+                let correlation = 0;
+
+                for (let i = 0; i < MAX_SAMPLES; i++) {
+                    correlation += Math.abs(buffer[i] - buffer[i + offset]);
+                }
+
+                correlation = 1 - (correlation / MAX_SAMPLES);
+                
+                if (correlation > 0.9 && correlation > lastCorrelation) {
+                    foundGoodCorrelation = true;
+                    if (correlation > best_correlation) {
+                        best_correlation = correlation;
+                        best_offset = offset;
+                    }
+                }
+                lastCorrelation = correlation;
+            }
+
+            if (foundGoodCorrelation) {
+                const shift = (best_offset + best_correlation - 0.5) / (1 + best_correlation);
+                return sampleRate / shift;
+            }
+            return -1;
+        }
+
+        function frequencyToNote(frequency) {
+            const A4 = 440;
+            const A4_INDEX = 57;
+            const noteNum = 12 * Math.log2(frequency / A4) + A4_INDEX;
+            const roundedNote = Math.round(noteNum);
+            
+            const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const octave = Math.floor(roundedNote / 12);
+            const noteName = noteNames[roundedNote % 12];
+            
+            return { note: noteName + octave, cents: (noteNum - roundedNote) * 100 };
+        }
+
+        function processAudio() {
+            const buffer = new Float32Array(analyser.fftSize);
+            analyser.getFloatTimeDomainData(buffer);
+            
+            const frequency = autoCorrelate(buffer, audioContext.sampleRate);
+            
+            if (frequency > 0) {
+                const detected = frequencyToNote(frequency);
+                pitchValue.textContent = Math.round(frequency) + ' Hz';
+                noteValue.textContent = detected.note;
+
+                const cents = detected.cents;
+                const barPosition = 50 + (cents / 2);
+                pitchBar.style.width = barPosition + '%';
+
+                if (melody.length > 0 && currentNoteIndex < melody.length) {
+                    const targetNote = melody[currentNoteIndex];
+                    const targetFreq = noteFrequencies[targetNote];
+                    
+                    if (targetFreq) {
+                        const diff = Math.abs(frequency - targetFreq);
+                        const percentDiff = (diff / targetFreq) * 100;
+
+                        feedback.style.display = 'block';
+
+                        if (percentDiff < 2) {
+                            feedback.textContent = '🎯 Perfect! ' + targetNote;
+                            feedback.className = 'feedback perfect';
+                            
+                            setTimeout(() => {
+                                currentNoteIndex++;
+                                if (currentNoteIndex >= melody.length) {
+                                    feedback.textContent = '🎉 Melody Complete!';
+                                    currentNoteIndex = 0;
+                                }
+                                updateMelodyDisplay();
+                            }, 500);
+                        } else if (percentDiff < 5) {
+                            feedback.textContent = '👍 Close! Target: ' + targetNote;
+                            feedback.className = 'feedback close';
+                        } else {
+                            const direction = frequency < targetFreq ? '⬆️ Higher' : '⬇️ Lower';
+                            feedback.textContent = direction + ' - Target: ' + targetNote;
+                            feedback.className = 'feedback off';
+                        }
+                    }
+                } else {
+                    feedback.style.display = 'none';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
