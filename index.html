@@ -723,7 +723,7 @@
 
                         feedback.style.display = 'block';
 
-                        if (percentDiff < 2) {
+                        if (percentDiff < 4) {
                             feedback.textContent = '🎯 Perfect! ' + targetNote;
                             feedback.className = 'feedback perfect';
                             
@@ -735,7 +735,7 @@
                                 }
                                 updateMelodyDisplay();
                             }, 500);
-                        } else if (percentDiff < 5) {
+                        } else if (percentDiff < 10) {
                             feedback.textContent = '👍 Close! Target: ' + targetNote;
                             feedback.className = 'feedback close';
                         } else {
