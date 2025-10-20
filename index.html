@@ -97,8 +97,9 @@
         }
 
         .note-value {
-            font-size: 2em;
-            color: #764ba2;
+            font-size: 4em;
+            color: #667eea;
+            font-weight: bold;
             margin-bottom: 20px;
         }
 
@@ -205,6 +206,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
+            position: relative;
         }
 
         .melody-note:hover {
@@ -215,6 +217,36 @@
             background: #4ade80;
             transform: scale(1.1);
             box-shadow: 0 4px 15px rgba(74, 222, 128, 0.5);
+        }
+
+        .play-note-btn {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 24px;
+            height: 24px;
+            background: #ffd700;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .play-note-btn:hover {
+            background: #ffed4e;
+            transform: scale(1.1);
+        }
+
+        .play-melody-btn {
+            background: #4ade80;
+            color: white;
+            padding: 10px 20px;
+            font-size: 0.9em;
+            margin-left: 10px;
         }
 
         .clear-btn {
@@ -359,7 +391,6 @@
         </div>
 
         <div class="pitch-display">
-            <div class="pitch-value" id="pitchValue">--</div>
             <div class="note-value" id="noteValue">--</div>
             <div class="pitch-indicator">
                 <div class="pitch-bar" id="pitchBar"></div>
@@ -382,7 +413,10 @@
             <div class="melody-sequence" id="melodySequence">
                 <span style="color: #999;">Your melody will appear here...</span>
             </div>
-            <button class="clear-btn" id="clearBtn">Clear Melody</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="clear-btn" id="clearBtn">Clear Melody</button>
+                <button class="play-melody-btn" id="playMelodyBtn">🔊 Play Melody</button>
+            </div>
         </div>
 
         <div class="info">
@@ -422,7 +456,6 @@
 
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
-        const pitchValue = document.getElementById('pitchValue');
         const noteValue = document.getElementById('noteValue');
         const pitchBar = document.getElementById('pitchBar');
         const feedback = document.getElementById('feedback');
@@ -431,6 +464,34 @@
         const melodySequence = document.getElementById('melodySequence');
         const clearBtn = document.getElementById('clearBtn');
         const recordingsList = document.getElementById('recordingsList');
+        const playMelodyBtn = document.getElementById('playMelodyBtn');
+        
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioCtx;
+        }
+
+        function playNote(frequency, duration = 0.5) {
+            const ctx = getAudioContext();
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+
+            oscillator.start(ctx.currentTime);
+            oscillator.stop(ctx.currentTime + duration);
+        }
 
         // Create note buttons
         Object.keys(noteFrequencies).forEach(note => {
@@ -460,6 +521,19 @@
                     noteEl.classList.add('active');
                 }
                 noteEl.textContent = note;
+                
+                // Add play button for each note
+                const playBtn = document.createElement('span');
+                playBtn.className = 'play-note-btn';
+                playBtn.textContent = '▶';
+                playBtn.title = 'Play this note';
+                playBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    playNote(noteFrequencies[note]);
+                };
+                noteEl.appendChild(playBtn);
+                
+                // Click note to remove
                 noteEl.onclick = () => removeNoteFromMelody(index);
                 melodySequence.appendChild(noteEl);
             });
@@ -478,6 +552,29 @@
                 currentNoteIndex = 0;
                 updateMelodyDisplay();
             }
+        };
+
+        playMelodyBtn.onclick = () => {
+            if (melody.length === 0) {
+                alert('Please create a melody first!');
+                return;
+            }
+
+            playMelodyBtn.disabled = true;
+            playMelodyBtn.textContent = '🔊 Playing...';
+
+            melody.forEach((note, index) => {
+                setTimeout(() => {
+                    playNote(noteFrequencies[note], 0.6);
+                    
+                    if (index === melody.length - 1) {
+                        setTimeout(() => {
+                            playMelodyBtn.disabled = false;
+                            playMelodyBtn.textContent = '🔊 Play Melody';
+                        }, 700);
+                    }
+                }, index * 700);
+            });
         };
 
         startBtn.onclick = async () => {
@@ -547,7 +644,6 @@
             stopBtn.disabled = true;
             status.textContent = 'Stopped';
             status.className = 'status stopped';
-            pitchValue.textContent = '--';
             noteValue.textContent = '--';
             pitchBar.style.width = '0%';
             feedback.style.display = 'none';
@@ -592,30 +688,44 @@
             }
 
             const audio = new Audio(recording.url);
-            const playBtn = event.target;
+            const playBtns = document.querySelectorAll('.play-btn');
+            let currentBtn = null;
+            
+            // Find the button that was clicked
+            playBtns.forEach(btn => {
+                if (btn.onclick && btn.onclick.toString().includes(id)) {
+                    currentBtn = btn;
+                }
+            });
             
             audio.onplay = () => {
-                playBtn.textContent = '⏸️ Pause';
-                playBtn.classList.add('playing');
+                if (currentBtn) {
+                    currentBtn.textContent = '⏸️ Pause';
+                    currentBtn.classList.add('playing');
+                }
                 currentlyPlaying = audio;
             };
 
             audio.onpause = () => {
-                playBtn.textContent = '▶️ Play';
-                playBtn.classList.remove('playing');
+                if (currentBtn) {
+                    currentBtn.textContent = '▶️ Play';
+                    currentBtn.classList.remove('playing');
+                }
                 currentlyPlaying = null;
             };
 
             audio.onended = () => {
-                playBtn.textContent = '▶️ Play';
-                playBtn.classList.remove('playing');
+                if (currentBtn) {
+                    currentBtn.textContent = '▶️ Play';
+                    currentBtn.classList.remove('playing');
+                }
                 currentlyPlaying = null;
             };
 
-            if (audio.paused) {
-                audio.play();
-            } else {
+            if (currentlyPlaying === audio && !audio.paused) {
                 audio.pause();
+            } else {
+                audio.play();
             }
         };
 
@@ -706,7 +816,6 @@
             
             if (frequency > 0) {
                 const detected = frequencyToNote(frequency);
-                pitchValue.textContent = Math.round(frequency) + ' Hz';
                 noteValue.textContent = detected.note;
 
                 const cents = detected.cents;
@@ -723,7 +832,7 @@
 
                         feedback.style.display = 'block';
 
-                        if (percentDiff < 8) {
+                        if (percentDiff < 12) {
                             feedback.textContent = '🎯 Perfect! ' + targetNote;
                             feedback.className = 'feedback perfect';
                             
@@ -735,7 +844,7 @@
                                 }
                                 updateMelodyDisplay();
                             }, 500);
-                        } else if (percentDiff < 15) {
+                        } else if (percentDiff < 20) {
                             feedback.textContent = '👍 Close! Target: ' + targetNote;
                             feedback.className = 'feedback close';
                         } else {
