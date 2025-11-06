@@ -453,6 +453,7 @@
         let audioChunks = [];
         let recordings = [];
         let currentlyPlaying = null;
+        let audioElements = {};
 
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
@@ -677,55 +678,50 @@
             const recording = recordings.find(r => r.id === id);
             if (!recording) return;
 
-            // Stop currently playing audio if any
-            if (currentlyPlaying) {
-                currentlyPlaying.pause();
-                currentlyPlaying = null;
-                document.querySelectorAll('.play-btn').forEach(btn => {
-                    btn.textContent = '▶️ Play';
-                    btn.classList.remove('playing');
-                });
+            // If there's a different audio playing, stop it
+            if (currentlyPlaying && currentlyPlaying !== id) {
+                const oldAudio = audioElements[currentlyPlaying];
+                if (oldAudio) {
+                    oldAudio.pause();
+                }
+                const oldBtn = document.querySelector(`button[onclick="playRecording(${currentlyPlaying})"]`);
+                if (oldBtn) {
+                    oldBtn.textContent = '▶️ Play';
+                    oldBtn.classList.remove('playing');
+                }
             }
 
-            const audio = new Audio(recording.url);
-            const playBtns = document.querySelectorAll('.play-btn');
-            let currentBtn = null;
-            
-            // Find the button that was clicked
-            playBtns.forEach(btn => {
-                if (btn.onclick && btn.onclick.toString().includes(id)) {
-                    currentBtn = btn;
-                }
-            });
-            
-            audio.onplay = () => {
-                if (currentBtn) {
-                    currentBtn.textContent = '⏸️ Pause';
-                    currentBtn.classList.add('playing');
-                }
-                currentlyPlaying = audio;
-            };
+            // Get or create audio element for this recording
+            if (!audioElements[id]) {
+                audioElements[id] = new Audio(recording.url);
+                
+                audioElements[id].onended = () => {
+                    const btn = document.querySelector(`button[onclick="playRecording(${id})"]`);
+                    if (btn) {
+                        btn.textContent = '▶️ Play';
+                        btn.classList.remove('playing');
+                    }
+                    currentlyPlaying = null;
+                };
+            }
 
-            audio.onpause = () => {
-                if (currentBtn) {
-                    currentBtn.textContent = '▶️ Play';
-                    currentBtn.classList.remove('playing');
-                }
-                currentlyPlaying = null;
-            };
+            const audio = audioElements[id];
+            const btn = document.querySelector(`button[onclick="playRecording(${id})"]`);
 
-            audio.onended = () => {
-                if (currentBtn) {
-                    currentBtn.textContent = '▶️ Play';
-                    currentBtn.classList.remove('playing');
-                }
-                currentlyPlaying = null;
-            };
-
-            if (currentlyPlaying === audio && !audio.paused) {
-                audio.pause();
-            } else {
+            if (audio.paused) {
                 audio.play();
+                if (btn) {
+                    btn.textContent = '⏸️ Pause';
+                    btn.classList.add('playing');
+                }
+                currentlyPlaying = id;
+            } else {
+                audio.pause();
+                if (btn) {
+                    btn.textContent = '▶️ Play';
+                    btn.classList.remove('playing');
+                }
+                currentlyPlaying = null;
             }
         };
 
