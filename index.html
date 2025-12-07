@@ -828,7 +828,7 @@
 
                         feedback.style.display = 'block';
 
-                        if (percentDiff < 12) {
+                        if (percentDiff < 25) {
                             feedback.textContent = '🎯 Perfect! ' + targetNote;
                             feedback.className = 'feedback perfect';
                             
@@ -840,11 +840,11 @@
                                 }
                                 updateMelodyDisplay();
                             }, 500);
-                        } else if (percentDiff < 20) {
+                        } else if (percentDiff < 35) {
                             feedback.textContent = '👍 Close! Target: ' + targetNote;
                             feedback.className = 'feedback close';
                         } else {
-                            const direction = frequency < targetFreq ? '⬆️ Higher' : '⬇️ Lower';
+                            const direction = frequency < targetFreq ? '⬆️ Much Higher!' : '⬇️ Much Lower!';
                             feedback.textContent = direction + ' - Target: ' + targetNote;
                             feedback.className = 'feedback off';
                         }
