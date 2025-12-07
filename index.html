@@ -380,7 +380,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎵 Singing Practice App</h1>
+        <h1>Singing Practice App</h1>
         <p class="subtitle">Real-time pitch detection and feedback</p>
 
         <div class="status stopped" id="status">Ready to start</div>
@@ -454,6 +454,9 @@
         let recordings = [];
         let currentlyPlaying = null;
         let audioElements = {};
+        let noteHistory = [];
+        let lastDisplayedNote = '';
+        const NOTE_SMOOTHING_FRAMES = 8;
 
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
@@ -641,6 +644,8 @@
             if (audioContext) audioContext.close();
 
             isListening = false;
+            noteHistory = [];
+            lastDisplayedNote = '';
             startBtn.disabled = false;
             stopBtn.disabled = true;
             status.textContent = 'Stopped';
@@ -812,7 +817,33 @@
             
             if (frequency > 0) {
                 const detected = frequencyToNote(frequency);
-                noteValue.textContent = detected.note;
+                
+                // Add to history for smoothing
+                noteHistory.push(detected.note);
+                if (noteHistory.length > NOTE_SMOOTHING_FRAMES) {
+                    noteHistory.shift();
+                }
+
+                // Find most common note in recent history
+                const noteCounts = {};
+                noteHistory.forEach(note => {
+                    noteCounts[note] = (noteCounts[note] || 0) + 1;
+                });
+
+                let mostCommonNote = detected.note;
+                let maxCount = 0;
+                for (const note in noteCounts) {
+                    if (noteCounts[note] > maxCount) {
+                        maxCount = noteCounts[note];
+                        mostCommonNote = note;
+                    }
+                }
+
+                // Only update display if the most common note has changed
+                if (mostCommonNote !== lastDisplayedNote) {
+                    noteValue.textContent = mostCommonNote;
+                    lastDisplayedNote = mostCommonNote;
+                }
 
                 const cents = detected.cents;
                 const barPosition = 50 + (cents / 2);
